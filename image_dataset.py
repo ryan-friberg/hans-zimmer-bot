@@ -120,7 +120,7 @@ class ImageDataSet(Dataset):
                         # NOTE: line 112 sometimes fails to find an extension but this is handled in 
                         # get_image_filenames_with_labels by giving valid file extensions
                         ext = os.path.splitext(image_name)[1] 
-
+                        print(image_name, ext)
                         if ext not in self.supported_file_types:
                             continue
 
