@@ -113,6 +113,7 @@ class ImageDataSet(Dataset):
                         ext = os.path.splitext(image_name)[1] 
 
                         if ext not in self.supported_file_types:
+                            print(ext, label_dir + '/' + str(i) + '_' + str(category_count) + ext)
                             continue
 
                         # rename the image to be more generic for better data organization
