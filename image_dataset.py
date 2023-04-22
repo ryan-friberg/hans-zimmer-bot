@@ -32,6 +32,7 @@ class ImageDataSet(Dataset):
             print("Making data directory...")
             os.mkdir(self.data_dir)
             self.scrape_images()
+            self.prune_data()
         
         image_files, labels = self.get_image_filenames_with_labels(self.data_dir)
         self.image_files = np.array(image_files)
@@ -65,6 +66,14 @@ class ImageDataSet(Dataset):
             image_files += image_class_files
             labels += [int(name)] * len(image_class_files)
         return image_files, labels
+
+    def prune_data(self):
+        # remove failed downloads
+        for label_file in os.listdir(self.data_dir):
+            for filename in os.listdir(self.data_dir + label_file + '/'):
+                ext = os.path.splitext(filename)[1]
+                if ext not in self.supported_file_types:
+                    os.remove(self.data_dir + label_file + '/' + filename)
 
     def scrape_images(self):
         print("Scraping images...")
@@ -113,7 +122,6 @@ class ImageDataSet(Dataset):
                         ext = os.path.splitext(image_name)[1] 
 
                         if ext not in self.supported_file_types:
-                            print(ext, label_dir + '/' + str(i) + '_' + str(category_count) + ext)
                             continue
 
                         # rename the image to be more generic for better data organization
