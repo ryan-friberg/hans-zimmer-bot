@@ -24,7 +24,7 @@ class ImageDataSet(Dataset):
         self.transforms = transforms
         self.label_categories = label_categories
         self.labels = [i for i in range(len(self.label_categories))]
-        self.supported_file_types = ["/*.png", "/*.jpg", "/*.jpeg"]
+        self.supported_file_types = [".png", ".jpg", ".jpeg"]
 
         # if the dataset has not been downloaded, initiate the scrape
         # NOTE: Repeat runs may have different images
@@ -62,7 +62,7 @@ class ImageDataSet(Dataset):
                 continue
             image_class_dir = os.path.join(images_dir, name)
             image_class_files = list(itertools.chain.from_iterable(
-                [glob.glob(image_class_dir + file_type) for file_type in self.supported_file_types]))
+                [glob.glob(image_class_dir + '/*' + file_type) for file_type in self.supported_file_types]))
             image_files += image_class_files
             labels += [int(name)] * len(image_class_files)
         return image_files, labels
@@ -120,7 +120,6 @@ class ImageDataSet(Dataset):
                         # NOTE: line 112 sometimes fails to find an extension but this is handled in 
                         # get_image_filenames_with_labels by giving valid file extensions
                         ext = os.path.splitext(image_name)[1] 
-                        print(image_name, ext)
                         if ext not in self.supported_file_types:
                             continue
 
