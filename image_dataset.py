@@ -19,13 +19,18 @@ import glob
 # pages of a bing search. The current implementation only takes the images from page 1
 
 class ImageDataSet(Dataset):
-    def __init__(self, data_dir, transforms, label_categories=None):
+    def __init__(self, data_dir, label_categories=None):
         self.data_dir = data_dir
-        self.transforms = transforms
+        # self.transforms = transforms.Compose([transforms.ToTensor(),
+        #                                       # transforms.Resize((200,200)),
+        #                                       transforms.Normalize([0.485, 0.456, 0.406], 
+        #                                                            [0.229, 0.224, 0.225]),
+        #                                       transforms.ToPILImage()])
         self.label_categories = label_categories
         self.labels = [i for i in range(len(self.label_categories))]
         self.supported_file_types = [".png", ".jpg", ".jpeg"]
-
+        print(self.supported_file_types)
+    
         # if the dataset has not been downloaded, initiate the scrape
         # NOTE: Repeat runs may have different images
         if not os.path.exists(self.data_dir):
@@ -46,7 +51,7 @@ class ImageDataSet(Dataset):
         try:
             image = Image.open(self.image_files[idx]).convert('RGB')
             label = self.labels[idx]
-            image = self.transforms(image)
+            # image = self.transforms(image)
             return image, label
         except:
             return None
@@ -54,7 +59,6 @@ class ImageDataSet(Dataset):
     def get_image_filenames_with_labels(self, images_dir):
         image_files = []
         labels = []
-        
         
         files = os.listdir(images_dir)
         for name in files:
@@ -66,8 +70,12 @@ class ImageDataSet(Dataset):
             image_files += image_class_files
             labels += [int(name)] * len(image_class_files)
         return image_files, labels
-
+    
+    def print_label_dist(self):
+        return np.unique(self.labels, return_counts=True)
+        
     def prune_data(self):
+        print("pruning data")
         # remove failed downloads
         for label_file in os.listdir(self.data_dir):
             for filename in os.listdir(self.data_dir + label_file + '/'):
@@ -135,7 +143,18 @@ class ImageDataSet(Dataset):
                         print("Image: ", image_name, "failed to download!")
                         continue
 
+        print("Finished scraping images!")
 
+def collate_fn(batch):
+    # Filter failed images first
+    batch = list(filter(lambda x: x is not None, batch))
+    
+    # Now collate into mini-batches
+    images = torch.stack([b[0] for b in batch])
+    labels = torch.LongTensor([b[1] for b in batch])
+    
+    return images, labels
+        
 def main():
     data_transforms = transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
     
@@ -144,7 +163,7 @@ def main():
               ['techno party', 'night club'],
               ['calm', 'peaceful']]
     
-    image_data = ImageDataSet("./data/", data_transforms, label_categories=labels)
+    image_data = ImageDataSet("./data/", label_categories=labels)
     print(len(image_data))
     print(image_data[0])
 
