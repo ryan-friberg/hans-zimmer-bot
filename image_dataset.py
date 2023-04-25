@@ -11,25 +11,13 @@ from torch.utils.data import Dataset
 import itertools
 import glob
 
-# NOTE: In order to introduce some variety, this dataset scraper is designed 
-# to have categories of multiple synonyms as one label class (ex: [sad, dark, somber, sullen]
-# all represent the same category of images/music)
-
-# TODO: depending on how many files we need, we may need to add support for extracting
-# pages of a bing search. The current implementation only takes the images from page 1
-
 class ImageDataSet(Dataset):
-    def __init__(self, data_dir, label_categories=None):
+    def __init__(self, data_dir, label_names):
         self.data_dir = data_dir
-        # self.transforms = transforms.Compose([transforms.ToTensor(),
-        #                                       # transforms.Resize((200,200)),
-        #                                       transforms.Normalize([0.485, 0.456, 0.406], 
-        #                                                            [0.229, 0.224, 0.225]),
-        #                                       transforms.ToPILImage()])
-        self.label_categories = label_categories
-        self.labels = [i for i in range(len(self.label_categories))]
+        self.label_names = label_names
+        self.labels = [i for i in range(len(self.label_names))]
         self.supported_file_types = [".png", ".jpg", ".jpeg"]
-        print(self.supported_file_types)
+        print("Supported files:", self.supported_file_types)
     
         # if the dataset has not been downloaded, initiate the scrape
         # NOTE: Repeat runs may have different images
@@ -51,7 +39,6 @@ class ImageDataSet(Dataset):
         try:
             image = Image.open(self.image_files[idx]).convert('RGB')
             label = self.labels[idx]
-            # image = self.transforms(image)
             return image, label
         except:
             return None
@@ -85,63 +72,62 @@ class ImageDataSet(Dataset):
 
     def scrape_images(self):
         print("Scraping images...")
-        for i, category in enumerate(self.label_categories):
-            seen_images = set()
-            category_count = 0
-            for label in category:
-                print("===> Extracting '" + label + "' images...")
+        seen_images = set()
+        label_count = 0
+        for i, label in enumerate(self.label_names):
+            print("===> Extracting '" + label + "' images...")
 
-                # handle search queries of multiple words 
-                label = label.split()
-                label = '+'.join(label)
+            # handle search queries of multiple words 
+            label = label.split()
+            label = '+'.join(label)
 
-                # set up the bing query using the label name as the search query
-                search_url = "http://www.bing.com/images/search?q=" + label + "&FORM=HDRSC2"
-                header = {'User-Agent':"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.134 Safari/537.36"}
-                soup = BeautifulSoup(urllib.request.urlopen(urllib.request.Request(search_url,headers=header)), 'html.parser')
+            # set up the bing query using the label name as the search query
+            search_url = "http://www.bing.com/images/search?q=" + label + "&FORM=HDRSC2"
+            header = {'User-Agent':"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.134 Safari/537.36"}
+            soup = BeautifulSoup(urllib.request.urlopen(urllib.request.Request(search_url,headers=header)), 'html.parser')
 
-                # extract the image files from the bing search results
-                for a_tag in soup.find_all("a",{"class":"iusc"}): # potentially want to manually limit how many images per class
-                    try:
-                        m = json.loads(a_tag["m"])
-                        turl = m["turl"]
-                        murl = m["murl"]
-                    except:
+            # extract the image files from the bing search results
+            for a_tag in soup.find_all("a",{"class":"iusc"}): # potentially want to manually limit how many images per class
+                try:
+                    m = json.loads(a_tag["m"])
+                    turl = m["turl"]
+                    murl = m["murl"]
+                except:
+                    continue
+
+                image_name = urllib.parse.urlsplit(murl).path.split("/")[-1]
+
+                # remove instances of duplicate images
+                if image_name in seen_images:
+                    continue
+                seen_images.add(image_name)
+
+                # create a dictionary for each label
+                label_dir = self.data_dir + str(i)
+                if not os.path.exists(label_dir):
+                    os.mkdir(label_dir)
+
+                # attempt to extract and download the file
+                try:
+                    img = urllib.request.urlopen(turl).read()
+
+                    # NOTE: line 112 sometimes fails to find an extension but this is handled in 
+                    # get_image_filenames_with_labels by giving valid file extensions
+                    ext = os.path.splitext(image_name)[1] 
+                    if ext not in self.supported_file_types:
                         continue
 
-                    image_name = urllib.parse.urlsplit(murl).path.split("/")[-1]
-                    
-                    # remove instances of duplicate images over two different searches within the same category
-                    if image_name in seen_images:
-                        continue
-                    seen_images.add(image_name)
+                    # rename the image to be more generic for better data organization
+                    name = label_dir + '/' + str(i) + '_' + str(label_count) + ext
+                    file = open(name, 'wb')
+                    file.write(img)
+                    file.close()
 
-                    # create a dictionary for each label
-                    label_dir = self.data_dir + str(i)
-                    if not os.path.exists(label_dir):
-                        os.mkdir(label_dir)
-
-                    # attempt to extract and download the file
-                    try:
-                        img = urllib.request.urlopen(turl).read()
-                        
-                        # NOTE: line 112 sometimes fails to find an extension but this is handled in 
-                        # get_image_filenames_with_labels by giving valid file extensions
-                        ext = os.path.splitext(image_name)[1] 
-                        if ext not in self.supported_file_types:
-                            continue
-
-                        # rename the image to be more generic for better data organization
-                        name = label_dir + '/' + str(i) + '_' + str(category_count) + ext
-                        file = open(name, 'wb')
-                        file.write(img)
-                        file.close()
-
-                        category_count += 1
-                    except Exception as e:
-                        # if the image fails to download, skip it
-                        print("Image: ", image_name, "failed to download!")
-                        continue
+                    label_count += 1
+                except Exception as e:
+                    # if the image fails to download, skip it
+                    print("Image: ", image_name, "failed to download!")
+                    continue
 
         print("Finished scraping images!")
 
@@ -154,19 +140,3 @@ def collate_fn(batch):
     labels = torch.LongTensor([b[1] for b in batch])
     
     return images, labels
-        
-def main():
-    data_transforms = transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-    
-    labels = [['dark', 'somber', 'gloomy', 'shadowy', 'dark art', 'dark landscape', 'gloomy art', 'rain'], 
-              ['bright', 'sparkling', 'dazzling', 'bright art', 'sunshine'],
-              ['techno party', 'night club'],
-              ['calm', 'peaceful']]
-    
-    image_data = ImageDataSet("./data/", label_categories=labels)
-    print(len(image_data))
-    print(image_data[0])
-
-
-if __name__ == '__main__':
-    main()
