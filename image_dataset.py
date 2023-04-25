@@ -12,10 +12,11 @@ import itertools
 import glob
 
 class ImageDataSet(Dataset):
-    def __init__(self, data_dir, label_names):
+    def __init__(self, data_dir, label_names, transforms=None):
         self.data_dir = data_dir
         self.label_names = label_names
-        self.labels = [i for i in range(len(self.label_names))]
+        self.transforms = transforms
+
         self.supported_file_types = [".png", ".jpg", ".jpeg"]
         print("Supported files:", self.supported_file_types)
     
@@ -39,6 +40,8 @@ class ImageDataSet(Dataset):
         try:
             image = Image.open(self.image_files[idx]).convert('RGB')
             label = self.labels[idx]
+            if self.transforms is not None:
+                image = self.transforms(image)
             return image, label
         except:
             return None
@@ -128,7 +131,6 @@ class ImageDataSet(Dataset):
                     # if the image fails to download, skip it
                     print("Image: ", image_name, "failed to download!")
                     continue
-
         print("Finished scraping images!")
 
 def collate_fn(batch):
