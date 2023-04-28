@@ -6,9 +6,9 @@ from google.cloud import storage
 from googleapiclient.discovery import build
 
 
-def search_and_download(keyword):
+# Takes search keyword, searches for YouTube videos using keyword and calls scrape_youtube to download each audio
+def search_and_download(keyword, api_key):
     # Setting up the YouTube API client
-    api_key = 'AIzaSyD_1bCo0_IX53sgZbXaRTLNRRlS7JLq8dk'
     youtube = build('youtube', 'v3', developerKey=api_key)
 
     # Searches for videos using the provided keyword
@@ -35,6 +35,7 @@ def search_and_download(keyword):
             print(f"Error downloading video {video_id}: {e}")
 
 
+# Takes the video ID and search keyword, downloads the audio from the YouTube video and saves to GCP bucket
 def scrape_youtube(video_id, keyword):
     youtube_root = 'https://www.youtube.com/watch?v='
     bucket_name = 'music_data_4995'
@@ -60,6 +61,7 @@ def scrape_youtube(video_id, keyword):
     os.rmdir(temp_dir)
 
 
+# Runs when youtube_scraper.py is run
 if __name__ == "__main__":
     keywords = ['dark music', 'somber music', 'gloomy music', 'sad music',
                 'bright music', 'happy music', 'cheerful music',
@@ -67,5 +69,6 @@ if __name__ == "__main__":
                 'calm music', 'peaceful music', 'relaxing music',
                 'classical music', 'classic music']
 
+    # Replace "API_KEY" with actual key
     for keyword in keywords:
-        search_and_download(keyword)
+        search_and_download(keyword, "API_KEY")
