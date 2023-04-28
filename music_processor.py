@@ -9,6 +9,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from PIL import Image
+import csv
 
 
 # Called when music_processor.py is run
@@ -23,12 +24,12 @@ def process_file(file_path, label):
     segment_length = sr * segment_seconds
     number_sections = int(np.ceil(len(y)/segment_length))
 
-    for i in range(min(number_sections, 5)):
-        s = y[int((number_sections/5)*i) * segment_length:(int((number_sections/5)*i)+1) * segment_length]
+    for i in range(min(number_sections, 15)):
+        s = y[int((number_sections/15)*i) * segment_length:(int((number_sections/15)*i)+1) * segment_length]
         segments.append(s)
 
     index = 0
-    test_idx = random.randint(0, 4)
+    test_idx = random.randint(0, 14)
     for segment in segments:
         # Converts audio segment to spectrogram
         spec = librosa.feature.melspectrogram(y=segment, sr=sr)
@@ -39,10 +40,10 @@ def process_file(file_path, label):
         # Saves spectrogram image to data folder
         spec = Image.fromarray(spec).convert("L")
         filename = file_path.split("/")[-1].split(".")[0]
-        if index == test_idx:
-            spec.save(data + test + label + "/" + filename + "-" + str(index) + ".jpeg")
+        if index == test_idx or index == test_idx - 14:
+            spec.save(data + test + "/" + filename + "-" + str(index) + ".jpeg")
         else:
-            spec.save(data + train + label + "/" + filename + "-" + str(index) + ".jpeg")
+            spec.save(data + train + "/" + filename + "-" + str(index) + ".jpeg")
 
         index += 1
 
@@ -71,6 +72,21 @@ def transform_music(labels):
         print("Finished: " + folder_name)
 
 
+def create_csv(paths):
+    fields = ["file_name", "caption_column"]
+    captions = []
+
+    for path in paths:
+        images = list(sorted(os.listdir(path)))
+        for image in images:
+            captions.append([path.split("/")[-1] + "/" + image, " ".join(image.split("_")[:2]) + " spectrogram"])
+
+    with open('data/metadata.csv', 'w', newline='') as f:
+        write = csv.writer(f)
+        write.writerow(fields)
+        write.writerows(captions)
+
+
 # Called when music_processor.py is run
 def main():
     labels = ['dark music', 'somber music', 'gloomy music', 'sad music',
@@ -85,6 +101,7 @@ def main():
 # Calls main() when music_processor.py is run
 if __name__ == "__main__":
     main()
+    create_csv(["data/train", "data/test"])
 
     # Uncomment to visualize saved spectrogram images
     # examples = ["##INSERT-EXAMPLE-NAME-HERE##"]
