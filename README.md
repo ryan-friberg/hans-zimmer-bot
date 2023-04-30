@@ -11,10 +11,10 @@ This file is used to build a PyTorch dataset object which will scrape Bing.com f
 This file is used to scrape the audio files from youtube given a list of labels (similar to image_dataset.py). The high-level functionality of the scraping is largely the same.
 
 ### music_processor.py
-This file will convert the scraped audio files and convert them into a PyTorch dataset of spectrogram images.
+This file will convert the scraped audio files into separate 15 second segments and convert those audio segments into mel-scaled spectrograms, generating a dataset of 3400+ spectrograms. Supplemental functions can visualize the spectrograms in program, convert spectrograms back to audio files, or produce the metadata.csv file that provides the necessary captions for the dataset.
 
 ### image_to_music.ipynb
 This file is the full pipeline of image to music. In it, the image dataset is collected, the ViT is trained, the Stable Diffusion is trained, and the file ends with a full inference pass. As with any notebook, any one subsection of the code can be run individually (ie only generate images, or only train the model). Please keep in mind that as of right now, since the ViT training is quite fast on a GCP GPU, there was no implementation of checkpointing as of right now. Since Stable Diffusion is trained via a HuggingFace training script and it takes far longer to train, it will create a checkpoint directory.
 
 ### train_text_to_image.py & script.sh
-These files are directly provided by Huggingface for the purpose of training stable diffusion on a new dataset. To run training, update script.sh with the appropriate directories and hyperparameters and simply run the file. Script.sh is essentially a wrapper for calling the python file.
+These files are directly provided by Huggingface for the purpose of training stable diffusion on a new dataset. To run training, update script.sh with the appropriate directories and hyperparameters and simply run the file. Script.sh is essentially a wrapper for calling the python file. Limited modification has been made to these files to tailor training to our purposes.
