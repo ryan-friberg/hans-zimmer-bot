@@ -15,3 +15,6 @@ This file will convert the scraped audio files and convert them into a PyTorch d
 
 ### image_to_music.ipynb
 This file is the full pipeline of image to music. In it, the image dataset is collected, the ViT is trained, the Stable Diffusion is trained, and the file ends with a full inference pass. As with any notebook, any one subsection of the code can be run individually (ie only generate images, or only train the model). Please keep in mind that as of right now, since the ViT training is quite fast on a GCP GPU, there was no implementation of checkpointing as of right now. Since Stable Diffusion is trained via a HuggingFace training script and it takes far longer to train, it will create a checkpoint directory.
+
+### train_text_to_image.py & script.sh
+These files are directly provided by Huggingface for the purpose of training stable diffusion on a new dataset. To run training, update script.sh with the appropriate directories and hyperparameters and simply run the file. Script.sh is essentially a wrapper for calling the python file.
