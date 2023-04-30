@@ -24,3 +24,10 @@ This file is the full pipeline of image to music. In it, the image dataset is co
 
 ### train_text_to_image.py & script.sh
 These files are directly provided by Huggingface for the purpose of training stable diffusion on a new dataset. To run training, update script.sh with the appropriate directories and hyperparameters and simply run the file. Script.sh is essentially a wrapper for calling the python file. Limited modification has been made to these files to tailor training to our purposes.
+
+
+# References
+https://huggingface.co/docs/transformers/model_doc/vit
+https://huggingface.co/blog/fine-tune-vit
+https://www.riffusion.com/about
+https://huggingface.co/docs/diffusers/training/text2image
