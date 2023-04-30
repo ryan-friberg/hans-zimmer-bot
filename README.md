@@ -28,6 +28,9 @@ These files are directly provided by Huggingface for the purpose of training sta
 
 # References
 https://huggingface.co/docs/transformers/model_doc/vit
+
 https://huggingface.co/blog/fine-tune-vit
+
 https://www.riffusion.com/about
+
 https://huggingface.co/docs/diffusers/training/text2image
