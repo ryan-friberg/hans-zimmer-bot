@@ -5,6 +5,7 @@
 import os
 import librosa
 import soundfile as sf
+import noisereduce as nr
 import numpy as np
 import random
 import matplotlib.pyplot as plt
@@ -57,21 +58,25 @@ def visualize_spectrogram(spec):
     plt.show()
 
 
-def convert_to_audio(spec):
+# Takes numpy array from saved image of spectrogram, converts back to audio file and saves to results folder
+def convert_to_audio(spec, label):
     audio = librosa.feature.inverse.mel_to_audio(spec)
-    sf.write('stereo_file1.wav', audio, 22050)
+    reduced_noise = nr.reduce_noise(y=audio, sr=22050, prop_decrease=.9)
+    sf.write('results/' + label + '.wav', reduced_noise, 22050)
 
 
+# Takes the audio files scraped from YouTube by label and calls process_file() to convert to spectrograms
 def transform_music(labels):
     for label in labels:
         folder_name = label.replace(" ", "_")
         print("Starting: " + folder_name)
         music_files = list(sorted(os.listdir(folder_name)))
         for music_file in music_files:
-            process_file(folder_name + "/" + music_file, label)
+            process_file(os.path.join(folder_name, music_file), label)
         print("Finished: " + folder_name)
 
 
+# Generates metadata.csv file needed to match captions to spectrograms in dataset
 def create_csv(paths):
     fields = ["file_name", "caption_column"]
     captions = []
@@ -111,3 +116,10 @@ if __name__ == "__main__":
     #    spec = np.array(img)
     #    visualize_spectrogram(spec)
 
+    # Uncomment to convert saved spectrogram back to audio
+    # examples = ["##INSERT-EXAMPLE-NAME-HERE##"]
+
+    # for example in examples:
+    #    img = Image.open(example).convert('F')
+    #    spec = np.array(img)
+    #    convert_to_audio(spec, example.split(".")[0])
