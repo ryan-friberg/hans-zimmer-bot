@@ -1,3 +1,7 @@
+# youtube_scraper.py
+#
+# COMS 4995 - Final Project
+# NOTE: The system is used by running youtube_scraper.py
 import os
 import subprocess
 import tempfile
@@ -6,7 +10,8 @@ from google.cloud import storage
 from googleapiclient.discovery import build
 
 
-# Takes search keyword, searches for YouTube videos using keyword and calls scrape_youtube to download each audio
+# Takes search keyword and YouTube API key, searches for YouTube videos using keyword and calls scrape_youtube
+# to download each audio file
 def search_and_download(keyword, api_key):
     # Setting up the YouTube API client
     youtube = build('youtube', 'v3', developerKey=api_key)
@@ -40,7 +45,7 @@ def scrape_youtube(video_id, keyword):
     youtube_root = 'https://www.youtube.com/watch?v='
     bucket_name = 'music_data_4995'
 
-    # Downloads the audio from the YouTube video
+    # Downloads the audio from the YouTube video to a temporary file
     youtube_url = youtube_root + video_id
     temp_dir = tempfile.mkdtemp()
     file_name = video_id + '.mp3'
@@ -49,7 +54,7 @@ def scrape_youtube(video_id, keyword):
         ['yt-dlp', '--no-warnings', '--extract-audio', '--audio-format', 'mp3', '--audio-quality', '0', '--verbose',
          '-o', temp_file, youtube_url])
 
-    # Uploads the audio file to GCP storage bucket
+    # Uploads the audio file to the GCP storage bucket
     folder_name = keyword.replace(' ', '_')
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
