@@ -4,6 +4,12 @@ This repository is pretty simple and easy to follow. The pipeline leverages imag
 
 ## Overview of the files
 
+### results
+Examples of processed spectrogram data files into .wav format. Please download to hear examples!
+
+### spectrogram_results
+Examples of the raw output of the pipeline. These are the raw spectrogram generations from the fine-tuned stable diffusion. These images would then be able to be converted to .wav, or may need some denoising applied. Each file was generated with a unique string and you can see how this will greatly affect the general structure of the spectrogram.
+
 ### image_dataset.py
 This file is used to build a PyTorch dataset object which will scrape Bing.com for images if a data directory does not exist. The scraping and dataset building happen somewhat simultaneously as a result. To use this functionality, once can import ImageDataSet from this file and build it as any normal PyTorch initialization. The only difference is, the ImageDataSet object requires a set of data transformations as well as a list of labels or search queries used for image scraping. These labels are best kept to short descriptors such as "gloomy" or "bright" such that later on the in the pipeline, the Vision Transformer can predict a more labels per image however the scraper supporters arbitrarily long queries include those that are multiple words.
 
